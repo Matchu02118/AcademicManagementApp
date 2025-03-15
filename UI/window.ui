@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>857</width>
+    <height>637</height>
+   </rect>
+  </property>
+  <property name="font">
+   <font>
+    <family>Tahoma</family>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow{
+	background-color: #1b1b32;
+}</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="WelcomeTab">
+       <attribute name="title">
+        <string>Home</string>
+       </attribute>
+       <widget class="QLabel" name="welcomeLabel">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>40</y>
+          <width>166</width>
+          <height>39</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Tahoma</family>
+          <pointsize>24</pointsize>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>WELCOME</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="NotesTab">
+       <attribute name="title">
+        <string>Notes</string>
+       </attribute>
+       <widget class="QPushButton" name="addNote">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>420</y>
+          <width>201</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Add Note</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>../Image/plusSign.jpg</normaloff>../Image/plusSign.jpg</iconset>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="deleteNote">
+        <property name="geometry">
+         <rect>
+          <x>450</x>
+          <y>420</y>
+          <width>201</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Delete Note</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>../Image/plusSign.jpg</normaloff>../Image/plusSign.jpg</iconset>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="ScheduleTab">
+       <attribute name="title">
+        <string>Schedules</string>
+       </attribute>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>110</x>
+          <y>50</y>
+          <width>151</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Tahoma</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;CLASS SCHEDULE&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_2">
+        <property name="geometry">
+         <rect>
+          <x>580</x>
+          <y>50</y>
+          <width>141</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Tahoma</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;EXAM SCHEDULE&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+       <widget class="QTableWidget" name="classSchedTable">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>90</y>
+          <width>381</width>
+          <height>331</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QTableWidget" name="examSchedTable">
+        <property name="geometry">
+         <rect>
+          <x>430</x>
+          <y>90</y>
+          <width>401</width>
+          <height>331</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="addTableData">
+        <property name="geometry">
+         <rect>
+          <x>190</x>
+          <y>460</y>
+          <width>201</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Add Schedule</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="removeTableData">
+        <property name="geometry">
+         <rect>
+          <x>430</x>
+          <y>460</y>
+          <width>201</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Remove Schedule</string>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
