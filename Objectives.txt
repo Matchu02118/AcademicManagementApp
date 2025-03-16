@@ -1,0 +1,9 @@
+Objectives:
+ - To help me learn PyQT and code its backend using ChatGPT or other chatbots as assistants.
+ - To help me grasp a basic understanding of databases such as SQL, CSV (main database file for the tables of my project), and other software used for database management if possible.
+
+Project Objectives:
+ - Create a user-friendly GUI
+ - Can handle different user accounts for different schedules, notes, etc.
+ - Can do CRUD of notes, schedules, as well as different user accounts.
+
