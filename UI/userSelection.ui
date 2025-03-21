@@ -6,14 +6,30 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>300</width>
-    <height>200</height>
+    <width>267</width>
+    <height>233</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Login</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="welcomeLabel">
+     <property name="font">
+      <font>
+       <pointsize>16</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Welcome</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
    <item>
     <widget class="QLineEdit" name="username_input">
      <property name="placeholderText">
@@ -23,11 +39,11 @@
    </item>
    <item>
     <widget class="QLineEdit" name="password_input">
-     <property name="placeholderText">
-      <string>Password</string>
-     </property>
      <property name="echoMode">
       <enum>QLineEdit::Password</enum>
+     </property>
+     <property name="placeholderText">
+      <string>Password</string>
      </property>
     </widget>
    </item>
@@ -41,7 +57,7 @@
    <item>
     <widget class="QPushButton" name="create_account_button">
      <property name="text">
-      <string>Create Account</string>
+      <string>Register</string>
      </property>
     </widget>
    </item>
