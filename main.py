@@ -1,12 +1,8 @@
 import sys
-import csv
-import pandas as pd
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView, QListWidgetItem, QDialog, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QLabel, QHBoxLayout, QRadioButton, QButtonGroup
 from PyQt6 import uic
-import os
-import json
 import sqlite3
-from PyQt6.QtGui import QFont  # Add this import for setting bold font
+from PyQt6.QtGui import QFont
 
 class LoginPage(QDialog):
     def __init__(self):
@@ -21,7 +17,7 @@ class LoginPage(QDialog):
         self.init_schedule_db()
 
     def init_user_db(self):
-        self.conn = sqlite3.connect("user_accounts.db")
+        self.conn = sqlite3.connect("database/user_accounts.db")
         cursor = self.conn.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
@@ -42,7 +38,7 @@ class LoginPage(QDialog):
                 username TEXT NOT NULL,
                 class_code TEXT NOT NULL,
                 time TEXT NOT NULL,
-                day TEXT NOT NULL,
+                day TEXT NOT NULL,o
                 room TEXT NOT NULL,
                 schedule_type TEXT NOT NULL,
                 FOREIGN KEY (username) REFERENCES users (username)
@@ -117,7 +113,7 @@ class main(QMainWindow):
 
         uic.loadUi("UI/window.ui", self)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabs.setCurrentIndex(0)
 
         # Note Tab buttons
         self.addNoteButton.clicked.connect(self.addNote)
@@ -127,6 +123,42 @@ class main(QMainWindow):
         self.removeSchedButton.clicked.connect(self.deleteSchedule)
         self.viewSchedButton.clicked.connect(self.viewSchedule)
         self.updateSchedButton.clicked.connect(self.updateSchedule)
+
+        # Load "Class" schedules by default
+        self.loadDefaultSchedule()
+
+    def loadDefaultSchedule(self):
+        try:
+            conn = sqlite3.connect("database/schedules.db")
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT class_code, time, day, room 
+                FROM schedule 
+                WHERE username = ? AND schedule_type = ?
+            """, (self.username, "Class"))
+            schedules = cursor.fetchall()
+            conn.close()
+
+            # Clear the table widget before populating
+            self.scheduleTableWidget.setColumnCount(4)
+            self.scheduleTableWidget.setHorizontalHeaderLabels(["Class Code", "Time", "Day", "Room"])
+
+            self.scheduleTableWidget.setColumnWidth(1, 150) 
+
+            header_font = QFont()
+            header_font.setBold(True)
+            for i in range(4):
+                self.scheduleTableWidget.horizontalHeaderItem(i).setFont(header_font)
+
+            # Populate the table with schedule data
+            self.scheduleTableWidget.setRowCount(0)
+            for row_idx, schedule in enumerate(schedules):
+                self.scheduleTableWidget.insertRow(row_idx)
+                for col_idx, value in enumerate(schedule):
+                    self.scheduleTableWidget.setItem(row_idx, col_idx, QTableWidgetItem(value))
+
+        except sqlite3.Error as e:
+            QMessageBox.warning(self, "Error", f"Failed to load default schedule: {e}")
 
     def addNote(self):
         QMessageBox.information(self, "Add Note", "This feature is under construction. A popup dialog will be implemented here.")
@@ -145,7 +177,7 @@ class main(QMainWindow):
 
     def save_schedule(self, schedule_data):
         try:
-            conn = sqlite3.connect("database/schedules.db")  # Connect to schedules.db
+            conn = sqlite3.connect("database/schedules.db")
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO schedule (username, class_code, time, day, room, schedule_type)
@@ -164,7 +196,6 @@ class main(QMainWindow):
             QMessageBox.warning(self, "No Selection", "Please select a schedule to delete.")
             return
 
-        # Get the class code of the selected schedule
         class_code_item = self.scheduleTableWidget.item(selected_row, 0)
         if not class_code_item:
             QMessageBox.warning(self, "Error", "Failed to retrieve the selected schedule.")
@@ -216,11 +247,14 @@ class main(QMainWindow):
 
                 # Clear the table widget before populating
                 self.scheduleTableWidget.setColumnCount(4)
-                self.scheduleTableWidget.setHorizontalHeaderLabels(["Class Code", "Time", "Day", "Room"])  # Removed "Type"
+                self.scheduleTableWidget.setHorizontalHeaderLabels(["Class Code", "Time", "Day", "Room"])
+
+                # Adjust column widths
+                self.scheduleTableWidget.setColumnWidth(1, 150)  # Set "Time" column width to 150 pixels
 
                 header_font = QFont()
                 header_font.setBold(True)
-                for i in range(4):  # Updated range
+                for i in range(4):
                     self.scheduleTableWidget.horizontalHeaderItem(i).setFont(header_font)
 
                 # Populate the table with schedule data

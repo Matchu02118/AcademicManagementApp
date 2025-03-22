@@ -1,0 +1,11 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "${workspaceFolder:AcademicManagementApp}/database/user_accounts.db",
+            "name": "Academic Management App Accounts"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}
