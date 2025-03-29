@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView, QListWidgetItem, QDialog, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QLabel, QHBoxLayout, QRadioButton, QButtonGroup
+from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView, QListWidgetItem, QDialog, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QLabel, QHBoxLayout, QRadioButton, QButtonGroup, QTextEdit, QSizePolicy
 from PyQt6 import uic
 import sqlite3
 from PyQt6.QtGui import QFont
@@ -106,6 +106,7 @@ class RegisterPage(QDialog):
         except sqlite3.IntegrityError:
             return False
 
+# Main Window Functions and Classes
 class main(QMainWindow):
     def __init__(self, username):
         super().__init__()
@@ -117,6 +118,11 @@ class main(QMainWindow):
 
         # Note Tab buttons
         self.addNoteButton.clicked.connect(self.addNote)
+        self.notesView.itemClicked.connect(self.displayNote)
+
+        # Initialize notes database
+        self.init_notes_db()
+        self.loadNotes()
         
         # Schedule Tab buttons
         self.addSchedButton.clicked.connect(self.addSchedule)
@@ -127,6 +133,7 @@ class main(QMainWindow):
         # Load "Class" schedules by default
         self.loadDefaultSchedule()
 
+    # Schedules Tab Functions
     def loadDefaultSchedule(self):
         try:
             conn = sqlite3.connect("database/schedules.db")
@@ -160,20 +167,50 @@ class main(QMainWindow):
         except sqlite3.Error as e:
             QMessageBox.warning(self, "Error", f"Failed to load default schedule: {e}")
 
-    def addNote(self):
-        QMessageBox.information(self, "Add Note", "This feature is under construction. A popup dialog will be implemented here.")
-
-    def open_delete_note_dialog(self):
-        QMessageBox.information(self, "Delete Note", "This feature is under construction. A popup dialog will be implemented here.")
-
     def addSchedule(self):
         dialog = ScheduleInputDialog(self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             schedule_data = dialog.get_schedule()
             if self.save_schedule(schedule_data):
                 QMessageBox.information(self, "Success", "Schedule added successfully.")
+                self.loadScheduleByType(schedule_data[-1])
             else:
                 QMessageBox.warning(self, "Error", "Failed to add schedule. Please try again.")
+
+    def loadScheduleByType(self, schedule_type):
+        try:
+            conn = sqlite3.connect("database/schedules.db")
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT class_code, time, day, room 
+                FROM schedule 
+                WHERE username = ? AND schedule_type = ?
+            """, (self.username, schedule_type))
+            schedules = cursor.fetchall()
+            conn.close()
+
+            # Clear the table widget before populating
+            self.scheduleTableWidget.setColumnCount(4)
+            self.scheduleTableWidget.setHorizontalHeaderLabels(["Class Code", "Time", "Day", "Room"])
+
+            self.scheduleTableWidget.setColumnWidth(1, 150)
+
+            header_font = QFont()
+            header_font.setBold(True)
+            for i in range(4):
+                self.scheduleTableWidget.horizontalHeaderItem(i).setFont(header_font)
+
+            # Populate the table with schedule data
+            self.scheduleTableWidget.setRowCount(0)
+            for row_idx, schedule in enumerate(schedules):
+                self.scheduleTableWidget.insertRow(row_idx)
+                for col_idx, value in enumerate(schedule):
+                    self.scheduleTableWidget.setItem(row_idx, col_idx, QTableWidgetItem(value))
+
+            if not schedules:
+                QMessageBox.information(self, "No Schedule", f"No {schedule_type} schedules found.")
+        except sqlite3.Error as e:
+            QMessageBox.warning(self, "Error", f"Failed to fetch schedules: {e}")
 
     def save_schedule(self, schedule_data):
         try:
@@ -250,7 +287,7 @@ class main(QMainWindow):
                 self.scheduleTableWidget.setHorizontalHeaderLabels(["Class Code", "Time", "Day", "Room"])
 
                 # Adjust column widths
-                self.scheduleTableWidget.setColumnWidth(1, 150)  # Set "Time" column width to 150 pixels
+                self.scheduleTableWidget.setColumnWidth(1, 150)
 
                 header_font = QFont()
                 header_font.setBold(True)
@@ -322,6 +359,103 @@ class main(QMainWindow):
             except sqlite3.Error as e:
                 QMessageBox.warning(self, "Error", f"Failed to update schedule: {e}")
 
+    # Notes Tab Functions
+    def init_notes_db(self):
+        """Initialize the notes database."""
+        self.notes_conn = sqlite3.connect("database/notes.db")
+        cursor = self.notes_conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS notes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                FOREIGN KEY (username) REFERENCES users (username)
+            )
+        """)
+        self.notes_conn.commit()
+
+    def loadNotes(self):
+        """Load notes from the database into the QListWidget."""
+        try:
+            cursor = self.notes_conn.cursor()
+            cursor.execute("SELECT id, title FROM notes WHERE username = ?", (self.username,))
+            notes = cursor.fetchall()
+
+            self.notesView.clear()
+            for note_id, title in notes:
+                item = QListWidgetItem(title)
+                item.setData(1, note_id)  # Store the note ID in the item's data
+                self.notesView.addItem(item)
+        except sqlite3.Error as e:
+            QMessageBox.warning(self, "Error", f"Failed to load notes: {e}")
+
+    def addNote(self):
+        """Open the dialog to add a new note."""
+        dialog = NoteInputDialog(self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            title, content = dialog.get_note()
+            if title and content:
+                if self.saveNoteToDB(title, content):
+                    QMessageBox.information(self, "Success", "Note added successfully.")
+                    self.loadNotes()
+                else:
+                    QMessageBox.warning(self, "Error", "Failed to add note. Please try again.")
+            else:
+                QMessageBox.warning(self, "Invalid Input", "Both title and content are required.")
+
+    def saveNoteToDB(self, title, content):
+        """Save a new note to the database."""
+        try:
+            cursor = self.notes_conn.cursor()
+            cursor.execute("""
+                INSERT INTO notes (username, title, content)
+                VALUES (?, ?, ?)
+            """, (self.username, title, content))
+            self.notes_conn.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            return False
+
+    def displayNote(self, item):
+        """Display the selected note's content."""
+        note_id = item.data(1)  # Retrieve the note ID from the item's data
+        try:
+            cursor = self.notes_conn.cursor()
+            cursor.execute("SELECT content FROM notes WHERE id = ?", (note_id,))
+            note_content = cursor.fetchone()
+            if note_content:
+                QMessageBox.information(self, "Note Content", note_content[0])
+            else:
+                QMessageBox.warning(self, "Error", "Failed to retrieve the note content.")
+        except sqlite3.Error as e:
+            QMessageBox.warning(self, "Error", f"Failed to fetch note content: {e}")
+
+    def closeEvent(self, event):
+        """Close the notes database connection when the application exits."""
+        self.notes_conn.close()
+        super().closeEvent(event)
+
+    def open_delete_note_dialog(self):
+        QMessageBox.information(self, "Delete Note", "This feature is under construction. A popup dialog will be implemented here.")
+
+    # Grades Tab Functions
+    # Placeholder for future implementation
+    # Add functions related to Grades here
+
+    # Assignments Tab Functions
+    # Placeholder for future implementation
+    # Add functions related to Assignments here
+
+    # Budgets Tab Functions
+    # Placeholder for future implementation
+    # Add functions related to Budgets here
+
+    # Settings Tab Functions
+    # Placeholder for future implementation
+    # Add functions related to Settings here
+
 class ScheduleInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -392,7 +526,6 @@ class ViewScheduleDialog(QDialog):
         self.examRadioButton = QRadioButton("Exam", self)
         self.classRadioButton.setChecked(True)  # Default to "Class"
 
-        # Group the radio buttons to make them mutually exclusive
         self.scheduleTypeGroup = QButtonGroup(self)
         self.scheduleTypeGroup.addButton(self.classRadioButton)
         self.scheduleTypeGroup.addButton(self.examRadioButton)
@@ -491,6 +624,42 @@ class UpdateScheduleDialog(QDialog):
             schedule_type
         ]
 
+class NoteInputDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Enter a Note:")
+
+        self.noteTitle = QLineEdit(self)
+        self.noteInput = QTextEdit(self)
+        self.noteInput.setMinimumSize(320, 240)   
+
+        # Layout for the dialog
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Note Title:"))
+        layout.addWidget(self.noteTitle)
+        layout.addWidget(QLabel("Enter your note:"))
+        layout.addWidget(self.noteInput)
+
+        # Create buttons
+        self.okButton = QPushButton("Save", self)
+        self.cancelButton = QPushButton("Cancel", self)
+        self.okButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        # Add buttons to layout
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.okButton)
+        buttonLayout.addWidget(self.cancelButton)
+        layout.addLayout(buttonLayout)
+
+        self.setLayout(layout)
+        
+        self.noteInput.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    def get_note(self):
+        """Return the note title and content."""
+        return self.noteTitle.text(), self.noteInput.toPlainText()
+    
 app = QApplication(sys.argv)
 login = LoginPage()
 if login.exec() == QDialog.DialogCode.Accepted:
