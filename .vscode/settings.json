@@ -3,8 +3,16 @@
         {
             "previewLimit": 50,
             "driver": "SQLite",
+            "name": "Notes",
+            "database": "${workspaceFolder:AcademicManagementApp}/database/notes.db",
+            "group": "AcademicManagementApp"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
             "database": "${workspaceFolder:AcademicManagementApp}/database/user_accounts.db",
-            "name": "Academic Management App Accounts"
+            "name": "User Accounts",
+            "group": "AcademicManagementApp"
         }
     ],
     "sqltools.useNodeRuntime": true

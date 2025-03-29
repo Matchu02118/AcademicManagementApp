@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+#DB Files
+.db
+
 # Distribution / packaging
 .Python
 build/
@@ -172,3 +175,6 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+database/notes.db
+database/notes.db
+database/schedules.db
