@@ -13,6 +13,13 @@
             "database": "${workspaceFolder:AcademicManagementApp}/database/user_accounts.db",
             "name": "User Accounts",
             "group": "AcademicManagementApp"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "${workspaceFolder:AcademicManagementApp}/database/schedules.db",
+            "name": "Schedules",
+            "group": "AcademicManagementApp"
         }
     ],
     "sqltools.useNodeRuntime": true
