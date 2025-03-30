@@ -3,7 +3,7 @@ import sqlite3
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView, QListWidgetItem, QDialog, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QLabel, QHBoxLayout, QRadioButton, QButtonGroup, QTextEdit, QSizePolicy
 from PyQt6 import uic
 from PyQt6.QtGui import QFont
-from dialogBoxes import ScheduleInputDialog, ViewScheduleDialog, UpdateScheduleDialog, NoteInputDialog, LoginPage, RegisterPage
+from dialogBoxes import ScheduleInputDialog, ViewScheduleDialog, UpdateScheduleDialog, NoteInputDialog, LoginPage, RegisterPage, EditNoteDialog
 
 class main(QMainWindow):
     def __init__(self, username):
@@ -317,14 +317,42 @@ class main(QMainWindow):
             return False
 
     def displayNote(self, item):
-        """Display the selected note's content."""
+        """Display the selected note's content in an editable dialog."""
         note_id = item.data(1)  # Retrieve the note ID from the item's data
         try:
             cursor = self.notes_conn.cursor()
-            cursor.execute("SELECT content FROM notes WHERE id = ?", (note_id,))
-            note_content = cursor.fetchone()
-            if note_content:
-                QMessageBox.information(self, "Note Content", note_content[0])
+            cursor.execute("SELECT title, content FROM notes WHERE id = ?", (note_id,))
+            note = cursor.fetchone()
+            if note:
+                title, content = note
+
+                # Open the EditNoteDialog
+                dialog = EditNoteDialog(note_id, title, content, self)
+                result = dialog.exec()
+
+                if result == QDialog.DialogCode.Accepted:
+                    # Save the updated note
+                    updated_title = dialog.titleLineEdit.text().strip()
+                    updated_content = dialog.contentTextEdit.toPlainText().strip()
+                    cursor.execute("""
+                        UPDATE notes
+                        SET title = ?, content = ?
+                        WHERE id = ?
+                    """, (updated_title, updated_content, note_id))
+                    self.notes_conn.commit()
+
+                    # Update the QListWidget item
+                    item.setText(updated_title)
+                    QMessageBox.information(self, "Success", "Note updated successfully.")
+
+                elif result == 2:  # Custom code for deletion
+                    # Delete the note
+                    cursor.execute("DELETE FROM notes WHERE id = ?", (note_id,))
+                    self.notes_conn.commit()
+
+                    # Remove the note from the QListWidget
+                    self.notesView.takeItem(self.notesView.row(item))
+                    QMessageBox.information(self, "Success", "Note deleted successfully.")
             else:
                 QMessageBox.warning(self, "Error", "Failed to retrieve the note content.")
         except sqlite3.Error as e:

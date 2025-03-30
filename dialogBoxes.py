@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtWidgets import QDialog, QMessageBox
 from PyQt6 import uic
+from PyQt6.QtGui import QTextCursor
 import sqlite3
 
 class LoginPage(QDialog):
@@ -12,7 +13,7 @@ class LoginPage(QDialog):
         self.login_button.clicked.connect(self.login)
         self.create_account_button.clicked.connect(self.registerPage)
         self.logged_in_username = None
-
+        
         # Initialize SQLite databases
         self.init_user_db()
         self.init_schedule_db()
@@ -111,6 +112,7 @@ class ScheduleInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Schedule Input")
+        self.setStyleSheet("background-color: #f0f0f0;")  # Set background color
 
         self.classCodeInput = QLineEdit(self)
         self.timeInput = QLineEdit(self)
@@ -127,19 +129,26 @@ class ScheduleInputDialog(QDialog):
         self.scheduleTypeGroup.addButton(self.classRadioButton)
         self.scheduleTypeGroup.addButton(self.examRadioButton)
 
+        # Labels for inputs
+        self.classCodeLabel = QLabel("Class Code:")
+        self.timeLabel = QLabel("Time:")
+        self.dayLabel = QLabel("Day:")
+        self.roomLabel = QLabel("Room:")
+        self.scheduleTypeLabel = QLabel("Schedule Type:")
+
         # Layout for the dialog
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Class Code:"))
+        layout.addWidget(self.classCodeLabel)
         layout.addWidget(self.classCodeInput)
-        layout.addWidget(QLabel("Time:"))
+        layout.addWidget(self.timeLabel)
         layout.addWidget(self.timeInput)
-        layout.addWidget(QLabel("Day:"))
+        layout.addWidget(self.dayLabel)
         layout.addWidget(self.dayInput)
-        layout.addWidget(QLabel("Room:"))
+        layout.addWidget(self.roomLabel)
         layout.addWidget(self.roomInput)
 
         # Add radio buttons to layout
-        layout.addWidget(QLabel("Schedule Type:"))
+        layout.addWidget(self.scheduleTypeLabel)
         layout.addWidget(self.classRadioButton)
         layout.addWidget(self.examRadioButton)
 
@@ -279,10 +288,17 @@ class NoteInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Enter a Note:")
+        self.resize(800, 640)
 
         self.noteTitle = QLineEdit(self)
         self.noteInput = QTextEdit(self)
-        self.noteInput.setMinimumSize(320, 240)   
+        self.noteInput.setMinimumSize(320, 240)
+
+        # Enable undo/redo functionality
+        self.noteInput.setUndoRedoEnabled(True)
+
+        # Connect the textChanged signal to enforce plain text
+        self.noteInput.textChanged.connect(self.convertToPlainText)
 
         # Layout for the dialog
         layout = QVBoxLayout()
@@ -307,6 +323,84 @@ class NoteInputDialog(QDialog):
         
         self.noteInput.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
+    def convertToPlainText(self):
+        """Convert the content of the QTextEdit to plain text."""
+        cursor = self.noteInput.textCursor()
+        text = self.noteInput.toPlainText()  # Get the plain text
+        self.noteInput.blockSignals(True)  # Prevent recursive signal triggering
+        self.noteInput.setPlainText(text)  # Set the plain text back
+        self.noteInput.blockSignals(False)  # Re-enable signals
+        cursor.movePosition(QTextCursor.MoveOperation.End)  # Move the cursor to the end
+        self.noteInput.setTextCursor(cursor)
+
     def get_note(self):
         """Return the note title and content."""
         return self.noteTitle.text(), self.noteInput.toPlainText()
+
+class EditNoteDialog(QDialog):
+    def __init__(self, note_id, title, content, parent=None):
+        super().__init__(parent)
+        self.note_id = note_id
+        self.setWindowTitle("Note")
+        self.resize(800, 640)
+
+        # Layout
+        layout = QVBoxLayout(self)
+
+        # Title input
+        self.titleLineEdit = QLineEdit(self)
+        self.titleLineEdit.setText(title)
+        layout.addWidget(self.titleLineEdit)
+
+        # Content input
+        self.contentTextEdit = QTextEdit(self)
+        self.contentTextEdit.setPlainText(content)
+
+        # Enable undo/redo functionality
+        self.contentTextEdit.setUndoRedoEnabled(True)
+
+        layout.addWidget(self.contentTextEdit)
+
+        # Connect the textChanged signal to enforce plain text
+        self.contentTextEdit.textChanged.connect(self.convertToPlainText)
+
+        # Buttons
+        self.saveButton = QPushButton("Save", self)
+        self.saveButton.clicked.connect(self.saveNote)
+        layout.addWidget(self.saveButton)
+
+        self.deleteButton = QPushButton("Delete", self)
+        self.deleteButton.clicked.connect(self.deleteNote)
+        layout.addWidget(self.deleteButton)
+
+        self.setLayout(layout)
+
+    def convertToPlainText(self):
+        """Convert the content of the QTextEdit to plain text."""
+        cursor = self.contentTextEdit.textCursor()
+        text = self.contentTextEdit.toPlainText()  # Get the plain text
+        self.contentTextEdit.blockSignals(True)  # Prevent recursive signal triggering
+        self.contentTextEdit.setPlainText(text)  # Set the plain text back
+        self.contentTextEdit.blockSignals(False)  # Re-enable signals
+        cursor.movePosition(QTextCursor.MoveOperation.End)  # Move the cursor to the end
+        self.contentTextEdit.setTextCursor(cursor)
+
+    def saveNote(self):
+        """Save the updated note."""
+        title = self.titleLineEdit.text().strip()
+        content = self.contentTextEdit.toPlainText().strip()
+        if not title or not content:
+            QMessageBox.warning(self, "Invalid Input", "Both title and content are required.")
+            return
+        self.accept()  # Close the dialog and return success
+
+    def deleteNote(self):
+        """Delete the note."""
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Deletion",
+            "Are you sure you want to delete this note?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        if confirm == QMessageBox.StandardButton.Yes:
+            self.done(2)  # Return a custom code for deletion
