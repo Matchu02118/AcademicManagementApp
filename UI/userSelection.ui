@@ -6,21 +6,32 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>267</width>
-    <height>233</height>
+    <width>314</width>
+    <height>304</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Login</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QDialog{
+	background:#1b1b32;
+}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QLabel" name="welcomeLabel">
      <property name="font">
       <font>
+       <family>Tahoma</family>
        <pointsize>16</pointsize>
        <bold>true</bold>
       </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	color: white;
+}</string>
      </property>
      <property name="text">
       <string>Welcome</string>
@@ -49,6 +60,21 @@
    </item>
    <item>
     <widget class="QPushButton" name="login_button">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{
+	background:#34345a;
+	color:white;
+}</string>
+     </property>
      <property name="text">
       <string>Login</string>
      </property>
@@ -56,6 +82,21 @@
    </item>
    <item>
     <widget class="QPushButton" name="create_account_button">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{
+	background:#34345a;
+	color:white;
+}</string>
+     </property>
      <property name="text">
       <string>Register</string>
      </property>

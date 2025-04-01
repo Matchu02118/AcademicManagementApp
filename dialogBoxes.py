@@ -326,11 +326,11 @@ class NoteInputDialog(QDialog):
     def convertToPlainText(self):
         """Convert the content of the QTextEdit to plain text."""
         cursor = self.noteInput.textCursor()
-        text = self.noteInput.toPlainText()  # Get the plain text
-        self.noteInput.blockSignals(True)  # Prevent recursive signal triggering
-        self.noteInput.setPlainText(text)  # Set the plain text back
-        self.noteInput.blockSignals(False)  # Re-enable signals
-        cursor.movePosition(QTextCursor.MoveOperation.End)  # Move the cursor to the end
+        text = self.noteInput.toPlainText()  
+        self.noteInput.blockSignals(True)
+        self.noteInput.setPlainText(text)
+        self.noteInput.blockSignals(False) 
+        cursor.setPosition(cursor.position()) 
         self.noteInput.setTextCursor(cursor)
 
     def get_note(self):
@@ -382,7 +382,7 @@ class EditNoteDialog(QDialog):
         self.contentTextEdit.blockSignals(True)  # Prevent recursive signal triggering
         self.contentTextEdit.setPlainText(text)  # Set the plain text back
         self.contentTextEdit.blockSignals(False)  # Re-enable signals
-        cursor.movePosition(QTextCursor.MoveOperation.End)  # Move the cursor to the end
+        cursor.setPosition(cursor.position())  # Move the cursor to the end
         self.contentTextEdit.setTextCursor(cursor)
 
     def saveNote(self):

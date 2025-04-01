@@ -33,26 +33,72 @@
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
      <widget class="QTabWidget" name="tabs">
+      <property name="font">
+       <font>
+        <family>Tahoma</family>
+        <pointsize>11</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
       <property name="cursor">
        <cursorShape>ArrowCursor</cursorShape>
       </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
       <property name="styleSheet">
-       <string notr="true">QTabWidget::pane {
+       <string notr="true">/* QTabWidget Pane */
+QTabWidget::pane {
+    background: #252542;
     border: 1px solid #444;
-    background: #222;
 }
+
+/* Tabs - General */
 QTabBar::tab {
     background: #333;
-    color: white;
+    color: #d0d0ff;
     padding: 10px;
     border: 1px solid #444;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    margin-right: 2px;
 }
+
+/* Active Tab */
 QTabBar::tab:selected {
-    background: #555;
+    background: #4e6eff;
+    color: white;
     border-bottom: 2px solid #ff9800;
 }
+
+/* Hover Effect */
 QTabBar::tab:hover {
     background: #666;
+    color: #ffffff;
+}
+
+/* Inactive Tabs */
+QTabBar::tab:!selected {
+    background: #2b2b48;
+    color: #a0a0b8;
+}
+
+QTabBar::tab:!selected:hover {
+    background: #666;
+    color: #ffffff;
+}
+
+/* Disabled Tabs */
+QTabBar::tab:disabled {
+    background: #1b1b32;
+    color: #555;
+}
+
+/* Pane Content */
+QWidget#tab1, QWidget#tab2, QWidget#tab3 {
+    background-color: #1e1e38; /* Differentiate pane content from tabs */
+    border: 1px solid #444;
+    padding: 10px;
 }
 </string>
       </property>
@@ -77,6 +123,7 @@ QTabBar::tab:hover {
          <widget class="QPushButton" name="removeSchedButton">
           <property name="font">
            <font>
+            <family>Tahoma</family>
             <pointsize>12</pointsize>
             <bold>true</bold>
            </font>
@@ -99,6 +146,7 @@ QTabBar::tab:hover {
          <widget class="QPushButton" name="addSchedButton">
           <property name="font">
            <font>
+            <family>Tahoma</family>
             <pointsize>12</pointsize>
             <bold>true</bold>
            </font>
@@ -121,6 +169,7 @@ QTabBar::tab:hover {
          <widget class="QPushButton" name="viewSchedButton">
           <property name="font">
            <font>
+            <family>Tahoma</family>
             <pointsize>12</pointsize>
             <bold>true</bold>
            </font>
@@ -142,10 +191,7 @@ QTabBar::tab:hover {
         <item row="1" column="0" colspan="2">
          <widget class="QTableWidget" name="scheduleTableWidget">
           <property name="styleSheet">
-           <string notr="true">QTableWidget{
-	background-color:rgb(214, 214, 214);
-
-}</string>
+           <string notr="true"/>
           </property>
          </widget>
         </item>
@@ -153,6 +199,7 @@ QTabBar::tab:hover {
          <widget class="QPushButton" name="updateSchedButton">
           <property name="font">
            <font>
+            <family>Tahoma</family>
             <pointsize>12</pointsize>
             <bold>true</bold>
            </font>
@@ -181,9 +228,30 @@ QTabBar::tab:hover {
         <item>
          <widget class="QListWidget" name="notesView">
           <property name="styleSheet">
-           <string notr="true">QListWidget{
-	border: 5px solid grey;
-    width:50px;
+           <string notr="true">QListWidget {
+    background-color: #1e1e38;
+    color: white;
+    border: 1px solid #444;
+}
+
+QListWidget::item {
+    padding: 5px;
+    border: none;
+}
+
+QListWidget::item:selected {
+    background-color: #4e6eff;
+    color: white;
+}
+
+QScrollBar:vertical {
+    background: #333;
+    width: 10px;
+}
+
+QScrollBar::handle:vertical {
+    background: #4e6eff;
+    border-radius: 5px;
 }</string>
           </property>
           <property name="frameShape">
@@ -207,8 +275,11 @@ QTabBar::tab:hover {
           </property>
           <property name="styleSheet">
            <string notr="true">QPushButton{
-	border-radius: 16px;
-	border:2px solid #1b1b32
+	background:gray;
+}
+
+QPushButton:hover{
+	
 }
 </string>
           </property>
@@ -238,6 +309,7 @@ QTabBar::tab:hover {
          <widget class="QLabel" name="gradeLabel">
           <property name="font">
            <font>
+            <family>Tahoma</family>
             <pointsize>16</pointsize>
             <bold>true</bold>
            </font>
@@ -258,6 +330,9 @@ QTabBar::tab:hover {
        </layout>
       </widget>
       <widget class="QWidget" name="AssignmentsTab">
+       <property name="cursor">
+        <cursorShape>ArrowCursor</cursorShape>
+       </property>
        <attribute name="title">
         <string>Assignments</string>
        </attribute>
@@ -266,6 +341,7 @@ QTabBar::tab:hover {
          <widget class="QLabel" name="assignmentLabel">
           <property name="font">
            <font>
+            <family>Tahoma</family>
             <pointsize>16</pointsize>
             <bold>true</bold>
            </font>

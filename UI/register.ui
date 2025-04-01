@@ -6,12 +6,17 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>321</width>
-    <height>241</height>
+    <width>315</width>
+    <height>306</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget{
+	background:#1b1b32;
+}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -28,6 +33,11 @@
        <bold>true</bold>
       </font>
      </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	color:#fff;
+}</string>
+     </property>
      <property name="text">
       <string>Register Account</string>
      </property>
@@ -42,7 +52,7 @@
      </property>
     </widget>
    </item>
-   <item alignment="Qt::AlignVCenter">
+   <item>
     <widget class="QLineEdit" name="username_input">
      <property name="enabled">
       <bool>true</bool>
@@ -50,20 +60,24 @@
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>18</height>
+       <height>0</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>320</width>
-       <height>1080</height>
+       <width>303</width>
+       <height>24</height>
       </size>
      </property>
      <property name="autoFillBackground">
       <bool>false</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true"/>
+      <string notr="true">QLineEdit{
+	background:#fff;
+	border: 1.5px solid #444;
+	border-radius:2px;
+}</string>
      </property>
      <property name="frame">
       <bool>false</bool>
@@ -76,13 +90,20 @@
      </property>
     </widget>
    </item>
-   <item alignment="Qt::AlignTop">
+   <item>
     <widget class="QLineEdit" name="password_input">
      <property name="maximumSize">
       <size>
        <width>320</width>
-       <height>1080</height>
+       <height>24</height>
       </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLineEdit{
+	background:#fff;
+	border: 1.5px solid #444;
+	border-radius:2px;
+}</string>
      </property>
      <property name="maxLength">
       <number>25</number>
@@ -105,6 +126,22 @@
        <width>240</width>
        <height>32</height>
       </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>Tahoma</family>
+       <pointsize>10</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton{
+	background:#34345a;
+	color:#fff;
+}</string>
      </property>
      <property name="text">
       <string>Create Account</string>
