@@ -1,0 +1,14 @@
+QDialog{
+    background-color: #1b1b32;
+    border-radius: 5px;
+}
+
+QLabel{
+    color:#f0f0f0;
+    font-weight:bold;
+}
+
+QRadioButton{
+    color:#f0f0f0;
+    font-weight:bold; 
+}

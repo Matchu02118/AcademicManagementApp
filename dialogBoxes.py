@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtWidgets import QDialog, QMessageBox
 from PyQt6 import uic
 from PyQt6.QtGui import QTextCursor
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve
 import sqlite3
 
 class LoginPage(QDialog):
@@ -112,8 +113,12 @@ class ScheduleInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Schedule Input")
-        self.setStyleSheet("background-color: #f0f0f0;")  # Set background color
-
+        with open("styles/scheduleDialogs/scheduleInput.qss", "r") as file:
+            qss= file.read()
+            
+        self.setStyleSheet(qss)
+        self.resize(400, 300)
+        
         self.classCodeInput = QLineEdit(self)
         self.timeInput = QLineEdit(self)
         self.dayInput = QLineEdit(self)
@@ -165,7 +170,8 @@ class ScheduleInputDialog(QDialog):
         layout.addLayout(buttonLayout)
 
         self.setLayout(layout)
-
+        self.layout().setAlignment(self.scheduleTypeLabel, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        
     def get_schedule(self):
         schedule_type = "Class" if self.classRadioButton.isChecked() else "Exam"
         return [
@@ -217,7 +223,12 @@ class UpdateScheduleDialog(QDialog):
     def __init__(self, schedule_data, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Update Schedule")
-
+        with open("styles/scheduleDialogs/scheduleInput.qss", "r") as file:
+            qss= file.read()
+            
+        self.setStyleSheet(qss)
+        self.resize(400, 300)
+        
         # Unpack schedule data
         self.class_code, self.time, self.day, self.room, self.schedule_type = schedule_data
 
@@ -246,17 +257,25 @@ class UpdateScheduleDialog(QDialog):
 
         # Layout for the dialog
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Class Code:"))
+        self.classCodeLabel = QLabel("Class Code:")
+        self.timeLabel = QLabel("Time:")
+        self.dayLabel = QLabel("Day:")
+        self.roomLabel = QLabel("Room:")
+        self.scheduleTypeLabel = QLabel("Schedule Type:")
+
+        # Layout for the dialog
+        layout = QVBoxLayout()
+        layout.addWidget(self.classCodeLabel)
         layout.addWidget(self.classCodeInput)
-        layout.addWidget(QLabel("Time:"))
+        layout.addWidget(self.timeLabel)
         layout.addWidget(self.timeInput)
-        layout.addWidget(QLabel("Day:"))
+        layout.addWidget(self.dayLabel)
         layout.addWidget(self.dayInput)
-        layout.addWidget(QLabel("Room:"))
+        layout.addWidget(self.roomLabel)
         layout.addWidget(self.roomInput)
 
         # Add radio buttons to layout
-        layout.addWidget(QLabel("Schedule Type:"))
+        layout.addWidget(self.scheduleTypeLabel)
         layout.addWidget(self.classRadioButton)
         layout.addWidget(self.examRadioButton)
 
@@ -273,7 +292,8 @@ class UpdateScheduleDialog(QDialog):
         layout.addLayout(buttonLayout)
 
         self.setLayout(layout)
-
+        self.layout().setAlignment(self.scheduleTypeLabel, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        
     def get_updated_schedule(self):
         schedule_type = "Class" if self.classRadioButton.isChecked() else "Exam"
         return [
@@ -290,6 +310,11 @@ class NoteInputDialog(QDialog):
         self.setWindowTitle("Enter a Note:")
         self.resize(800, 640)
 
+        with open("styles/noteDialogs/noteInput.qss", "r") as file:
+            qss= file.read()
+        
+        self.setStyleSheet(qss)
+        
         self.noteTitle = QLineEdit(self)
         self.noteInput = QTextEdit(self)
         self.noteInput.setMinimumSize(320, 240)
@@ -300,11 +325,14 @@ class NoteInputDialog(QDialog):
         # Connect the textChanged signal to enforce plain text
         self.noteInput.textChanged.connect(self.convertToPlainText)
 
+        self.noteTitleLabel = QLabel("Note Title:")
+        self.noteInputLabel = QLabel("Enter your note:")
+
         # Layout for the dialog
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Note Title:"))
+        layout.addWidget(self.noteTitleLabel)
         layout.addWidget(self.noteTitle)
-        layout.addWidget(QLabel("Enter your note:"))
+        layout.addWidget(self.noteInputLabel)
         layout.addWidget(self.noteInput)
 
         # Create buttons
@@ -320,8 +348,9 @@ class NoteInputDialog(QDialog):
         layout.addLayout(buttonLayout)
 
         self.setLayout(layout)
-        
         self.noteInput.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.layout().setAlignment(self.noteTitleLabel, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        self.layout().setAlignment(self.noteInputLabel, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
 
     def convertToPlainText(self):
         """Convert the content of the QTextEdit to plain text."""
@@ -344,15 +373,20 @@ class EditNoteDialog(QDialog):
         self.setWindowTitle("Note")
         self.resize(800, 640)
 
+        with open("styles/noteDialogs/noteInput.qss", "r") as file:
+            qss= file.read()
+        
+        self.setStyleSheet(qss)
+        
         # Layout
         layout = QVBoxLayout(self)
-
-        # Title input
+        
+        # Title Section
         self.titleLineEdit = QLineEdit(self)
         self.titleLineEdit.setText(title)
         layout.addWidget(self.titleLineEdit)
 
-        # Content input
+        # Content Section
         self.contentTextEdit = QTextEdit(self)
         self.contentTextEdit.setPlainText(content)
 
@@ -361,7 +395,6 @@ class EditNoteDialog(QDialog):
 
         layout.addWidget(self.contentTextEdit)
 
-        # Connect the textChanged signal to enforce plain text
         self.contentTextEdit.textChanged.connect(self.convertToPlainText)
 
         # Buttons
