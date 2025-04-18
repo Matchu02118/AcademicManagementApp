@@ -8,6 +8,10 @@ QLabel{
     font-weight:bold;
 }
 
+QLabel#scheduleTypeLabel{
+    font-size:18px;
+}
+
 QRadioButton{
     color:#f0f0f0;
     font-weight:bold; 

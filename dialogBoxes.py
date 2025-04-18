@@ -1,10 +1,10 @@
 from PyQt6.QtWidgets import (
-    QDialog, QLineEdit, QVBoxLayout, QLabel, QRadioButton, QButtonGroup, QPushButton, QHBoxLayout, QTextEdit, QSizePolicy
+    QDialog, QLineEdit, QVBoxLayout, QLabel, QRadioButton, QButtonGroup, QPushButton, QHBoxLayout, QTextEdit, QSizePolicy, QDateEdit, QComboBox
 )
 from PyQt6.QtWidgets import QDialog, QMessageBox
 from PyQt6 import uic
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QDate
 import sqlite3
 
 class LoginPage(QDialog):
@@ -411,11 +411,12 @@ class EditNoteDialog(QDialog):
     def convertToPlainText(self):
         """Convert the content of the QTextEdit to plain text."""
         cursor = self.contentTextEdit.textCursor()
-        text = self.contentTextEdit.toPlainText()  # Get the plain text
+        cursor_position = cursor.position()  # Save the current cursor position
+        text = self.contentTextEdit.toPlainText()
         self.contentTextEdit.blockSignals(True)  # Prevent recursive signal triggering
         self.contentTextEdit.setPlainText(text)  # Set the plain text back
         self.contentTextEdit.blockSignals(False)  # Re-enable signals
-        cursor.setPosition(cursor.position())  # Move the cursor to the end
+        cursor.setPosition(cursor_position)  # Restore the cursor position
         self.contentTextEdit.setTextCursor(cursor)
 
     def saveNote(self):
@@ -437,3 +438,87 @@ class EditNoteDialog(QDialog):
         )
         if confirm == QMessageBox.StandardButton.Yes:
             self.done(2)  # Return a custom code for deletion
+            
+class AddAssignmentDialog(QDialog):
+    def __init__(self, username, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Add Assignment")
+        with open("styles/assignmentDialogs/assignmentInput.qss", "r") as file:
+            qss = file.read()
+        self.setStyleSheet(qss)
+
+        self.username = username
+
+        # Removed subjectName
+        self.assignmentName = QLineEdit(self)
+        self.assignmentDetails = QTextEdit(self)
+        self.dueDate = QDateEdit(self)
+        self.dueDate.setCalendarPopup(True)
+        self.dueDate.setDate(QDate.currentDate())  # Set to the current date
+
+        # Dropdown for class codes and schedule types
+        self.classDropdown = QComboBox(self)
+        self.load_class_codes()
+
+        # Layout
+        layout = QVBoxLayout()
+        # Removed subjectName label and input
+        layout.addWidget(QLabel("Assignment Title:"))
+        layout.addWidget(self.assignmentName)
+        layout.addWidget(QLabel("Assignment Details:"))
+        layout.addWidget(self.assignmentDetails)
+        layout.addWidget(QLabel("Due Date:"))
+        layout.addWidget(self.dueDate)
+        layout.addWidget(QLabel("Class Code and Type:"))
+        layout.addWidget(self.classDropdown)
+
+        # Buttons
+        self.okButton = QPushButton("Save", self)
+        self.cancelButton = QPushButton("Cancel", self)
+        self.okButton.clicked.connect(self.save_assignment)
+        self.cancelButton.clicked.connect(self.reject)
+
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.okButton)
+        buttonLayout.addWidget(self.cancelButton)
+        layout.addLayout(buttonLayout)
+
+        self.setLayout(layout)
+
+    def load_class_codes(self):
+        """Load class codes and schedule types from schedules.db."""
+        try:
+            conn = sqlite3.connect("database/schedules.db")
+            cursor = conn.cursor()
+            cursor.execute("SELECT class_code, schedule_type FROM schedule WHERE username = ?", (self.username,))
+            for class_code, schedule_type in cursor.fetchall():
+                self.classDropdown.addItem(f"{class_code} ({schedule_type})")
+            conn.close()
+        except sqlite3.Error as e:
+            QMessageBox.warning(self, "Error", f"Failed to load class codes: {e}")
+
+    def save_assignment(self):
+        """Save the assignment to the database."""
+        # Removed subjectName from the save logic
+        title = self.assignmentName.text().strip()
+        details = self.assignmentDetails.toPlainText().strip()
+        due_date = self.dueDate.date().toString("yyyy-MM-dd")
+        class_code = self.classDropdown.currentText().split(" ")[0]
+
+        if not title or not details:
+            QMessageBox.warning(self, "Invalid Input", "All fields are required.")
+            return
+
+        try:
+            conn = sqlite3.connect("database/assignments.db")
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO assignments (username, title, class_code, details, due)
+                VALUES (?, ?, ?, ?, ?)
+            """, (self.username, title, details, due_date, class_code))
+            conn.commit()
+            conn.close()
+            QMessageBox.information(self, "Success", "Assignment added successfully.")
+            self.accept()
+        except sqlite3.Error as e:
+            QMessageBox.warning(self, "Error", f"Failed to save assignment: {e}")

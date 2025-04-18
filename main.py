@@ -1,9 +1,10 @@
 import sys
 import sqlite3
-from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView, QListWidgetItem, QDialog, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QLabel, QHBoxLayout, QRadioButton, QButtonGroup, QTextEdit, QSizePolicy
+from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView, QListWidgetItem, QDialog, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QLabel, QHBoxLayout, QRadioButton, QButtonGroup, QTextEdit, QSizePolicy, QCheckBox
 from PyQt6 import uic
 from PyQt6.QtGui import QFont
-from dialogBoxes import ScheduleInputDialog, ViewScheduleDialog, UpdateScheduleDialog, NoteInputDialog, LoginPage, RegisterPage, EditNoteDialog
+from PyQt6.QtCore import Qt  # Add this import
+from dialogBoxes import ScheduleInputDialog, ViewScheduleDialog, UpdateScheduleDialog, NoteInputDialog, LoginPage, RegisterPage, EditNoteDialog, AddAssignmentDialog
 
 class main(QMainWindow):
     def __init__(self, username):
@@ -13,20 +14,27 @@ class main(QMainWindow):
         uic.loadUi("UI/window.ui", self)
 
         self.tabs.setCurrentIndex(0)
-
-        # Note Tab buttons
-        self.addNoteButton.clicked.connect(self.addNote)
-        self.notesView.itemClicked.connect(self.displayNote)
-
-        # Initialize notes database
-        self.init_notes_db()
-        self.loadNotes()
         
         # Schedule Tab buttons
         self.addSchedButton.clicked.connect(self.addSchedule)
         self.removeSchedButton.clicked.connect(self.deleteSchedule)
         self.viewSchedButton.clicked.connect(self.viewSchedule)
         self.updateSchedButton.clicked.connect(self.updateSchedule)
+
+        # Note Tab buttons
+        self.addNoteButton.clicked.connect(self.addNote)
+        self.notesView.itemClicked.connect(self.displayNote)
+        
+        # Assignment Tab buttons
+        self.addAssignmentButton.clicked.connect(self.addAssignment)
+
+        # Initialize notes database
+        self.init_notes_db()
+        self.loadNotes()
+        
+        # Initialize assignments database
+        self.init_assignments_db()
+        self.loadAssignments()
 
         # Load "Class" schedules by default
         self.loadDefaultSchedule()
@@ -361,18 +369,92 @@ class main(QMainWindow):
     def closeEvent(self, event):
         """Close the notes database connection when the application exits."""
         self.notes_conn.close()
+        self.assignments_conn.close()
         super().closeEvent(event)
 
     def open_delete_note_dialog(self):
         QMessageBox.information(self, "Delete Note", "This feature is under construction. A popup dialog will be implemented here.")
 
-    # Grades Tab Functions
-    # Placeholder for future implementation
-    # Add functions related to Grades here
-
     # Assignments Tab Functions
-    # Placeholder for future implementation
-    # Add functions related to Assignments here
+    def init_assignments_db(self):
+        """Initialize the assignments database."""
+        self.assignments_conn = sqlite3.connect("database/assignments.db")
+        cursor = self.assignments_conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS assignments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL,
+                subject TEXT NOT NULL,
+                title TEXT NOT NULL,
+                details TEXT NOT NULL,
+                due TEXT NOT NULL,
+                class_code TEXT NOT NULL,
+                FOREIGN KEY (username) REFERENCES users (username)
+            )
+        """)
+        self.assignments_conn.commit()
+
+    def loadAssignments(self):
+        """Load assignments from the database into the QTableWidget."""
+        try:
+            cursor = self.assignments_conn.cursor()
+            cursor.execute("SELECT id, title, details, due, class_code FROM assignments WHERE username = ?", (self.username,))
+            assignments = cursor.fetchall()
+
+            # Clear the table widget before populating
+            self.assignmentList.setRowCount(0)
+            self.assignmentList.setColumnCount(4)
+            self.assignmentList.setHorizontalHeaderLabels(["Title", "Details", "Due Date", "Class Code"])
+
+            for row_idx, (assignment_id, title, details, due, class_code) in enumerate(assignments):
+                self.assignmentList.insertRow(row_idx)
+                self.assignmentList.setItem(row_idx, 0, QTableWidgetItem(title))
+                self.assignmentList.setItem(row_idx, 1, QTableWidgetItem(details))
+                self.assignmentList.setItem(row_idx, 2, QTableWidgetItem(due))
+                self.assignmentList.setItem(row_idx, 3, QTableWidgetItem(class_code))
+        except sqlite3.Error as e:
+            QMessageBox.warning(self, "Error", f"Failed to load assignments: {e}")
+
+    def addAssignment(self):
+        """Open the dialog to add a new assignment."""
+        dialog = AddAssignmentDialog(self.username, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.loadAssignments()
+
+    def removeAssignment(self):
+        """Remove the selected assignment from the QTableWidget and database."""
+        selected_row = self.assignmentTableWidget.currentRow()
+        if selected_row == -1:
+            QMessageBox.warning(self, "No Selection", "Please select an assignment to delete.")
+            return
+
+        title_item = self.assignmentTableWidget.item(selected_row, 0)
+        if not title_item:
+            QMessageBox.warning(self, "Error", "Failed to retrieve the selected assignment.")
+            return
+
+        title = title_item.text()
+
+        # Confirm deletion
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Deletion",
+            f"Are you sure you want to delete the assignment '{title}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if confirm == QMessageBox.StandardButton.Yes:
+            try:
+                cursor = self.assignments_conn.cursor()
+                cursor.execute("DELETE FROM assignments WHERE username = ? AND title = ?", (self.username, title))
+                self.assignments_conn.commit()
+
+                # Remove the row from the table widget
+                self.assignmentTableWidget.removeRow(selected_row)
+
+                QMessageBox.information(self, "Success", "Assignment deleted successfully.")
+            except sqlite3.Error as e:
+                QMessageBox.warning(self, "Error", f"Failed to delete assignment: {e}")
 
     # Budgets Tab Functions
     # Placeholder for future implementation

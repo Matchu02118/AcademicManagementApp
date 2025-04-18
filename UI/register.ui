@@ -141,6 +141,7 @@
       <string notr="true">QPushButton{
 	background:#34345a;
 	color:#fff;
+	padding:10px;
 }</string>
      </property>
      <property name="text">
