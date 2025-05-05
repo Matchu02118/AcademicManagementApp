@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>914</width>
-    <height>699</height>
+    <width>775</width>
+    <height>600</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>640</width>
+    <height>480</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>800</width>
+    <height>600</height>
+   </size>
   </property>
   <property name="font">
    <font>
@@ -16,7 +28,7 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Academic Management App</string>
   </property>
   <property name="layoutDirection">
    <enum>Qt::LeftToRight</enum>
@@ -42,6 +54,9 @@
       </property>
       <property name="cursor">
        <cursorShape>ArrowCursor</cursorShape>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
       </property>
       <property name="autoFillBackground">
        <bool>false</bool>
@@ -319,6 +334,12 @@ QScrollBar::handle:vertical {
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
             <widget class="QTableWidget" name="assignmentList">
+             <property name="minimumSize">
+              <size>
+               <width>400</width>
+               <height>0</height>
+              </size>
+             </property>
              <property name="styleSheet">
               <string notr="true">QTableWidget{
 	background-color:#333;
@@ -329,6 +350,9 @@ QScrollBar::handle:vertical {
            </item>
           </layout>
          </widget>
+        </item>
+        <item>
+         <widget class="QWidget" name="widget" native="true"/>
         </item>
         <item alignment="Qt::AlignTop">
          <widget class="QWidget" name="cal_buttonWidget" native="true">
@@ -414,11 +438,26 @@ QScrollBar::handle:vertical {
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QLabel" name="settingsLabel">
+          <property name="minimumSize">
+           <size>
+            <width>640</width>
+            <height>480</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>800</width>
+            <height>600</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>16</pointsize>
             <bold>true</bold>
            </font>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
           </property>
           <property name="styleSheet">
            <string notr="true">QLabel{

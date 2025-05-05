@@ -1,10 +1,10 @@
 import sys
 import sqlite3
-from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView, QListWidgetItem, QDialog, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QLabel, QHBoxLayout, QRadioButton, QButtonGroup, QTextEdit, QSizePolicy, QCheckBox
+from PyQt6.QtWidgets import *
 from PyQt6 import uic
-from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt  # Add this import
-from dialogBoxes import ScheduleInputDialog, ViewScheduleDialog, UpdateScheduleDialog, NoteInputDialog, LoginPage, RegisterPage, EditNoteDialog, AddAssignmentDialog
+from PyQt6.QtGui import *
+from PyQt6.QtCore import *
+from dialogBoxes import *
 
 class main(QMainWindow):
     def __init__(self, username):
@@ -28,25 +28,19 @@ class main(QMainWindow):
         # Assignment Tab buttons
         self.addAssignmentButton.clicked.connect(self.addAssignment)
 
-        # Initialize notes database
-        self.init_notes_db()
+        # Load data
         self.loadNotes()
-        
-        # Initialize assignments database
-        self.init_assignments_db()
         self.loadAssignments()
-
-        # Load "Class" schedules by default
         self.loadDefaultSchedule()
 
     # Schedules Tab Functions
     def loadDefaultSchedule(self):
         try:
-            conn = sqlite3.connect("database/schedules.db")
+            conn = sqlite3.connect("db/database.db")  # Updated database path
             cursor = conn.cursor()
             cursor.execute("""
                 SELECT class_code, time, day, room 
-                FROM schedule 
+                FROM schedules 
                 WHERE username = ? AND schedule_type = ?
             """, (self.username, "Class"))
             schedules = cursor.fetchall()
@@ -85,11 +79,11 @@ class main(QMainWindow):
 
     def loadScheduleByType(self, schedule_type):
         try:
-            conn = sqlite3.connect("database/schedules.db")
+            conn = sqlite3.connect("db/database.db")
             cursor = conn.cursor()
             cursor.execute("""
                 SELECT class_code, time, day, room 
-                FROM schedule 
+                FROM schedules 
                 WHERE username = ? AND schedule_type = ?
             """, (self.username, schedule_type))
             schedules = cursor.fetchall()
@@ -120,10 +114,10 @@ class main(QMainWindow):
 
     def save_schedule(self, schedule_data):
         try:
-            conn = sqlite3.connect("database/schedules.db")
+            conn = sqlite3.connect("db/database.db")  # Updated database path
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO schedule (username, class_code, time, day, room, schedule_type)
+                INSERT INTO schedules (username, class_code, time, day, room, schedule_type)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (self.username, *schedule_data))  # Insert schedule data
             conn.commit()
@@ -156,10 +150,10 @@ class main(QMainWindow):
 
         if confirm == QMessageBox.StandardButton.Yes:
             try:
-                conn = sqlite3.connect("database/schedules.db")  # Connect to schedules.db
+                conn = sqlite3.connect("db/database.db")  # Updated database path
                 cursor = conn.cursor()
                 cursor.execute("""
-                    DELETE FROM schedule 
+                    DELETE FROM schedules
                     WHERE username = ? AND class_code = ?
                 """, (self.username, class_code))  # Delete the selected schedule
                 conn.commit()
@@ -178,11 +172,11 @@ class main(QMainWindow):
             schedule_type = dialog.get_selected_schedule_type()
 
             try:
-                conn = sqlite3.connect("database/schedules.db")
+                conn = sqlite3.connect("db/database.db")  # Updated database path
                 cursor = conn.cursor()
                 cursor.execute("""
                     SELECT class_code, time, day, room 
-                    FROM schedule 
+                    FROM schedules
                     WHERE username = ? AND schedule_type = ?
                 """, (self.username, schedule_type))
                 schedules = cursor.fetchall()
@@ -225,11 +219,11 @@ class main(QMainWindow):
         room = self.scheduleTableWidget.item(selected_row, 3).text()
         
         try:
-            conn = sqlite3.connect("database/schedules.db")
+            conn = sqlite3.connect("db/database.db")
             cursor = conn.cursor()
             cursor.execute("""
                 SELECT schedule_type 
-                FROM schedule 
+                FROM schedules
                 WHERE username = ? AND class_code = ? AND time = ? AND day = ? AND room = ?
             """, (self.username, class_code, time, day, room))
             schedule_type = cursor.fetchone()[0]
@@ -243,19 +237,17 @@ class main(QMainWindow):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             updated_schedule = dialog.get_updated_schedule()
 
-            # Update the schedule in the database
             try:
-                conn = sqlite3.connect("database/schedules.db")
+                conn = sqlite3.connect("db/database.db")
                 cursor = conn.cursor()
                 cursor.execute("""
-                    UPDATE schedule 
+                    UPDATE schedules
                     SET class_code = ?, time = ?, day = ?, room = ?, schedule_type = ?
                     WHERE username = ? AND class_code = ? AND time = ? AND day = ? AND room = ?
                 """, (*updated_schedule, self.username, class_code, time, day, room))
                 conn.commit()
                 conn.close()
 
-                # Update the table widget
                 self.scheduleTableWidget.item(selected_row, 0).setText(updated_schedule[0])
                 self.scheduleTableWidget.item(selected_row, 1).setText(updated_schedule[1])
                 self.scheduleTableWidget.item(selected_row, 2).setText(updated_schedule[2])
@@ -266,32 +258,20 @@ class main(QMainWindow):
                 QMessageBox.warning(self, "Error", f"Failed to update schedule: {e}")
 
     # Notes Tab Functions
-    def init_notes_db(self):
-        """Initialize the notes database."""
-        self.notes_conn = sqlite3.connect("database/notes.db")
-        cursor = self.notes_conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS notes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL,
-                title TEXT NOT NULL,
-                content TEXT NOT NULL,
-                FOREIGN KEY (username) REFERENCES users (username)
-            )
-        """)
-        self.notes_conn.commit()
 
     def loadNotes(self):
         """Load notes from the database into the QListWidget."""
         try:
-            cursor = self.notes_conn.cursor()
+            conn = sqlite3.connect("db/database.db")
+            cursor = conn.cursor()
             cursor.execute("SELECT id, title FROM notes WHERE username = ?", (self.username,))
             notes = cursor.fetchall()
+            conn.close()
 
             self.notesView.clear()
             for note_id, title in notes:
                 item = QListWidgetItem(title)
-                item.setData(1, note_id)  # Store the note ID in the item's data
+                item.setData(1, note_id)
                 self.notesView.addItem(item)
         except sqlite3.Error as e:
             QMessageBox.warning(self, "Error", f"Failed to load notes: {e}")
@@ -313,12 +293,14 @@ class main(QMainWindow):
     def saveNoteToDB(self, title, content):
         """Save a new note to the database."""
         try:
-            cursor = self.notes_conn.cursor()
+            conn = sqlite3.connect("db/database.db")
+            cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO notes (username, title, content)
                 VALUES (?, ?, ?)
             """, (self.username, title, content))
-            self.notes_conn.commit()
+            conn.commit()
+            conn.close()
             return True
         except sqlite3.Error as e:
             print(f"Database error: {e}")
@@ -328,37 +310,41 @@ class main(QMainWindow):
         """Display the selected note's content in an editable dialog."""
         note_id = item.data(1)  # Retrieve the note ID from the item's data
         try:
-            cursor = self.notes_conn.cursor()
+            conn = sqlite3.connect("db/database.db")
+            cursor = conn.cursor()
             cursor.execute("SELECT title, content FROM notes WHERE id = ?", (note_id,))
             note = cursor.fetchone()
+            conn.close()
+
             if note:
                 title, content = note
-
-                # Open the EditNoteDialog
                 dialog = EditNoteDialog(note_id, title, content, self)
                 result = dialog.exec()
 
                 if result == QDialog.DialogCode.Accepted:
-                    # Save the updated note
                     updated_title = dialog.titleLineEdit.text().strip()
                     updated_content = dialog.contentTextEdit.toPlainText().strip()
+                    conn = sqlite3.connect("db/database.db")
+                    cursor = conn.cursor()
                     cursor.execute("""
                         UPDATE notes
                         SET title = ?, content = ?
                         WHERE id = ?
                     """, (updated_title, updated_content, note_id))
-                    self.notes_conn.commit()
+                    conn.commit()
+                    conn.close()
 
                     # Update the QListWidget item
                     item.setText(updated_title)
                     QMessageBox.information(self, "Success", "Note updated successfully.")
 
-                elif result == 2:  # Custom code for deletion
-                    # Delete the note
+                elif result == 2:
+                    conn = sqlite3.connect("db/database.db")
+                    cursor = conn.cursor()
                     cursor.execute("DELETE FROM notes WHERE id = ?", (note_id,))
-                    self.notes_conn.commit()
+                    conn.commit()
+                    conn.close()
 
-                    # Remove the note from the QListWidget
                     self.notesView.takeItem(self.notesView.row(item))
                     QMessageBox.information(self, "Success", "Note deleted successfully.")
             else:
@@ -367,39 +353,21 @@ class main(QMainWindow):
             QMessageBox.warning(self, "Error", f"Failed to fetch note content: {e}")
 
     def closeEvent(self, event):
-        """Close the notes database connection when the application exits."""
-        self.notes_conn.close()
-        self.assignments_conn.close()
+        """Handle cleanup when the application exits."""
         super().closeEvent(event)
 
     def open_delete_note_dialog(self):
         QMessageBox.information(self, "Delete Note", "This feature is under construction. A popup dialog will be implemented here.")
 
     # Assignments Tab Functions
-    def init_assignments_db(self):
-        """Initialize the assignments database."""
-        self.assignments_conn = sqlite3.connect("database/assignments.db")
-        cursor = self.assignments_conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS assignments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL,
-                subject TEXT NOT NULL,
-                title TEXT NOT NULL,
-                details TEXT NOT NULL,
-                due TEXT NOT NULL,
-                class_code TEXT NOT NULL,
-                FOREIGN KEY (username) REFERENCES users (username)
-            )
-        """)
-        self.assignments_conn.commit()
-
     def loadAssignments(self):
         """Load assignments from the database into the QTableWidget."""
         try:
-            cursor = self.assignments_conn.cursor()
+            conn = sqlite3.connect("db/database.db")
+            cursor = conn.cursor()
             cursor.execute("SELECT id, title, details, due, class_code FROM assignments WHERE username = ?", (self.username,))
             assignments = cursor.fetchall()
+            conn.close()
 
             # Clear the table widget before populating
             self.assignmentList.setRowCount(0)
@@ -416,45 +384,10 @@ class main(QMainWindow):
             QMessageBox.warning(self, "Error", f"Failed to load assignments: {e}")
 
     def addAssignment(self):
-        """Open the dialog to add a new assignment."""
-        dialog = AddAssignmentDialog(self.username, self)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            self.loadAssignments()
+        pass
 
     def removeAssignment(self):
-        """Remove the selected assignment from the QTableWidget and database."""
-        selected_row = self.assignmentTableWidget.currentRow()
-        if selected_row == -1:
-            QMessageBox.warning(self, "No Selection", "Please select an assignment to delete.")
-            return
-
-        title_item = self.assignmentTableWidget.item(selected_row, 0)
-        if not title_item:
-            QMessageBox.warning(self, "Error", "Failed to retrieve the selected assignment.")
-            return
-
-        title = title_item.text()
-
-        # Confirm deletion
-        confirm = QMessageBox.question(
-            self,
-            "Confirm Deletion",
-            f"Are you sure you want to delete the assignment '{title}'?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-
-        if confirm == QMessageBox.StandardButton.Yes:
-            try:
-                cursor = self.assignments_conn.cursor()
-                cursor.execute("DELETE FROM assignments WHERE username = ? AND title = ?", (self.username, title))
-                self.assignments_conn.commit()
-
-                # Remove the row from the table widget
-                self.assignmentTableWidget.removeRow(selected_row)
-
-                QMessageBox.information(self, "Success", "Assignment deleted successfully.")
-            except sqlite3.Error as e:
-                QMessageBox.warning(self, "Error", f"Failed to delete assignment: {e}")
+        pass
 
     # Budgets Tab Functions
     # Placeholder for future implementation
@@ -465,7 +398,7 @@ class main(QMainWindow):
     # Add functions related to Settings here
 
 app = QApplication(sys.argv)
-login = LoginPage()
+login = LoginPage("db/user_accounts.db")  # Ensure the correct database path is passed
 if login.exec() == QDialog.DialogCode.Accepted:
     window = main(login.logged_in_username)
     window.show()

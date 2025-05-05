@@ -1,61 +1,19 @@
-from PyQt6.QtWidgets import (
-    QDialog, QLineEdit, QVBoxLayout, QLabel, QRadioButton, QButtonGroup, QPushButton, QHBoxLayout, QTextEdit, QSizePolicy, QDateEdit, QComboBox
-)
-from PyQt6.QtWidgets import QDialog, QMessageBox
+from PyQt6.QtWidgets import *
+from PyQt6.QtWidgets import *
 from PyQt6 import uic
-from PyQt6.QtGui import QTextCursor
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QDate
+from PyQt6.QtGui import *
+from PyQt6.QtCore import *
 import sqlite3
 
 class LoginPage(QDialog):
-    def __init__(self):
+    def __init__(self, user_db_path):
         super().__init__()
-        uic.loadUi("UI/userSelection.ui", self)
+        uic.loadUi("UI/login.ui", self)
         self.login_button.clicked.connect(self.login)
         self.create_account_button.clicked.connect(self.registerPage)
         self.logged_in_username = None
-        
-        # Initialize SQLite databases
-        self.init_user_db()
-        self.init_schedule_db()
+        self.conn = sqlite3.connect(user_db_path)  # Initialize the database connection
 
-    def init_user_db(self):
-        self.conn = sqlite3.connect("database/user_accounts.db")
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                username TEXT PRIMARY KEY,
-                password TEXT NOT NULL
-            )
-        """)
-        self.conn.commit()
-
-    def init_schedule_db(self):
-        conn = sqlite3.connect("database/schedules.db")
-        cursor = conn.cursor()
-
-        # Ensure the schedule table exists
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS schedule (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL,
-                class_code TEXT NOT NULL,
-                time TEXT NOT NULL,
-                day TEXT NOT NULL,
-                room TEXT NOT NULL,
-                schedule_type TEXT NOT NULL,
-                FOREIGN KEY (username) REFERENCES users (username)
-            )
-        """)
-
-        cursor.execute("PRAGMA table_info(schedule)")
-        columns = [column[1] for column in cursor.fetchall()]
-        if "schedule_type" not in columns:
-            cursor.execute("ALTER TABLE schedule ADD COLUMN schedule_type TEXT NOT NULL DEFAULT 'Class'")
-
-        conn.commit()
-        conn.close()
-        
     def login(self):
         username = self.username_input.text()
         password = self.password_input.text()
@@ -68,7 +26,7 @@ class LoginPage(QDialog):
             self.password_input.clear()
 
     def registerPage(self):
-        register_dialog = RegisterPage(self.conn, self)
+        register_dialog = RegisterPage(self.conn, self)  # Pass the connection to RegisterPage
         register_dialog.exec()
 
     def validate_credentials(self, username, password):
@@ -78,14 +36,14 @@ class LoginPage(QDialog):
         return result is not None and result[0] == password
 
     def closeEvent(self, event):
-        self.conn.close()
+        self.conn.close()  # Close the database connection
         super().closeEvent(event)
 
 class RegisterPage(QDialog):
     def __init__(self, conn, parent=None):
         super().__init__(parent)
         uic.loadUi("UI/register.ui", self)
-        self.conn = conn
+        self.conn = conn  # Use the connection passed from LoginPage
         self.createAccButton.clicked.connect(self.create_account)
 
     def create_account(self):
@@ -440,57 +398,16 @@ class EditNoteDialog(QDialog):
             self.done(2)  # Return a custom code for deletion
             
 class AddAssignmentDialog(QDialog):
-    def __init__(self, username, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Add Assignment")
-        with open("styles/assignmentDialogs/assignmentInput.qss", "r") as file:
-            qss = file.read()
-        self.setStyleSheet(qss)
+    pass
 
-        self.username = username
-
-        # Removed subjectName
-        self.assignmentName = QLineEdit(self)
-        self.assignmentDetails = QTextEdit(self)
-        self.dueDate = QDateEdit(self)
-        self.dueDate.setCalendarPopup(True)
-        self.dueDate.setDate(QDate.currentDate())  # Set to the current date
-
-        # Dropdown for class codes and schedule types
-        self.classDropdown = QComboBox(self)
-        self.load_class_codes()
-
-        # Layout
-        layout = QVBoxLayout()
-        # Removed subjectName label and input
-        layout.addWidget(QLabel("Assignment Title:"))
-        layout.addWidget(self.assignmentName)
-        layout.addWidget(QLabel("Assignment Details:"))
-        layout.addWidget(self.assignmentDetails)
-        layout.addWidget(QLabel("Due Date:"))
-        layout.addWidget(self.dueDate)
-        layout.addWidget(QLabel("Class Code and Type:"))
-        layout.addWidget(self.classDropdown)
-
-        # Buttons
-        self.okButton = QPushButton("Save", self)
-        self.cancelButton = QPushButton("Cancel", self)
-        self.okButton.clicked.connect(self.save_assignment)
-        self.cancelButton.clicked.connect(self.reject)
-
-        buttonLayout = QHBoxLayout()
-        buttonLayout.addWidget(self.okButton)
-        buttonLayout.addWidget(self.cancelButton)
-        layout.addLayout(buttonLayout)
-
-        self.setLayout(layout)
+class DeleteAssignmentDialog(QDialog):
 
     def load_class_codes(self):
         """Load class codes and schedule types from schedules.db."""
         try:
-            conn = sqlite3.connect("database/schedules.db")
+            conn = sqlite3.connect("database/database.db")  # Updated database path
             cursor = conn.cursor()
-            cursor.execute("SELECT class_code, schedule_type FROM schedule WHERE username = ?", (self.username,))
+            cursor.execute("SELECT class_code, schedule_type FROM schedules WHERE username = ?", (self.username,))
             for class_code, schedule_type in cursor.fetchall():
                 self.classDropdown.addItem(f"{class_code} ({schedule_type})")
             conn.close()
@@ -510,7 +427,7 @@ class AddAssignmentDialog(QDialog):
             return
 
         try:
-            conn = sqlite3.connect("database/assignments.db")
+            conn = sqlite3.connect("database/database.db")  # Updated database path
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO assignments (username, title, class_code, details, due)
