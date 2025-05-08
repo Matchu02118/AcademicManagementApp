@@ -43,7 +43,7 @@ class RegisterPage(QDialog):
     def __init__(self, conn, parent=None):
         super().__init__(parent)
         uic.loadUi("UI/register.ui", self)
-        self.conn = conn  # Use the connection passed from LoginPage
+        self.conn = conn
         self.createAccButton.clicked.connect(self.create_account)
 
     def create_account(self):
@@ -312,14 +312,20 @@ class NoteInputDialog(QDialog):
 
     def convertToPlainText(self):
         """Convert the content of the QTextEdit to plain text."""
+        current_text = self.noteInput.toPlainText()
         cursor = self.noteInput.textCursor()
-        text = self.noteInput.toPlainText()  
-        self.noteInput.blockSignals(True)
-        self.noteInput.setPlainText(text)
-        self.noteInput.blockSignals(False) 
-        cursor.setPosition(cursor.position()) 
-        self.noteInput.setTextCursor(cursor)
+        cursor_position = cursor.position()  # Save the current cursor position
 
+        # Only update the text if it has changed
+        if self.noteInput.toPlainText() != current_text:
+            self.noteInput.blockSignals(True)  # Prevent recursive signal triggering
+            self.noteInput.setPlainText(current_text)  # Set the plain text back
+            self.noteInput.blockSignals(False)  # Re-enable signals
+
+        # Restore the cursor position
+        cursor.setPosition(cursor_position)
+        self.noteInput.setTextCursor(cursor)
+        
     def get_note(self):
         """Return the note title and content."""
         return self.noteTitle.text(), self.noteInput.toPlainText()
@@ -398,44 +404,24 @@ class EditNoteDialog(QDialog):
             self.done(2)  # Return a custom code for deletion
             
 class AddAssignmentDialog(QDialog):
-    pass
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        uic.loadUi("ui/assignment.ui", self)
+        self.load_subjects()
+        self.setWindowTitle("Add Assignment")
+        
+    def assignment_input(self):
+        subjectName = self.classCodes.currentText()
+        assignmentTitle = self.title.text()
+        assignmentDetails = self.details.toPlainText()
+        dueDate = self.dueDate.selectedDate().toString("MM-dd-yyyy")
+        return subjectName, assignmentTitle, assignmentDetails, dueDate
 
-class DeleteAssignmentDialog(QDialog):
-
-    def load_class_codes(self):
-        """Load class codes and schedule types from schedules.db."""
-        try:
-            conn = sqlite3.connect("database/database.db")  # Updated database path
-            cursor = conn.cursor()
-            cursor.execute("SELECT class_code, schedule_type FROM schedules WHERE username = ?", (self.username,))
-            for class_code, schedule_type in cursor.fetchall():
-                self.classDropdown.addItem(f"{class_code} ({schedule_type})")
-            conn.close()
-        except sqlite3.Error as e:
-            QMessageBox.warning(self, "Error", f"Failed to load class codes: {e}")
-
-    def save_assignment(self):
-        """Save the assignment to the database."""
-        # Removed subjectName from the save logic
-        title = self.assignmentName.text().strip()
-        details = self.assignmentDetails.toPlainText().strip()
-        due_date = self.dueDate.date().toString("yyyy-MM-dd")
-        class_code = self.classDropdown.currentText().split(" ")[0]
-
-        if not title or not details:
-            QMessageBox.warning(self, "Invalid Input", "All fields are required.")
-            return
-
-        try:
-            conn = sqlite3.connect("database/database.db")  # Updated database path
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO assignments (username, title, class_code, details, due)
-                VALUES (?, ?, ?, ?, ?)
-            """, (self.username, title, details, due_date, class_code))
-            conn.commit()
-            conn.close()
-            QMessageBox.information(self, "Success", "Assignment added successfully.")
-            self.accept()
-        except sqlite3.Error as e:
-            QMessageBox.warning(self, "Error", f"Failed to save assignment: {e}")
+    def load_subjects(self):
+        conn = sqlite3.connect("db/database.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT class_code FROM schedules")
+        subjects = cursor.fetchall()
+        for subject in subjects:
+            self.classCodes.addItem(subject[0])
+        conn.close()

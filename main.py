@@ -5,6 +5,9 @@ from PyQt6 import uic
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 from dialogBoxes import *
+import warnings
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class main(QMainWindow):
     def __init__(self, username):
@@ -25,13 +28,15 @@ class main(QMainWindow):
         self.addNoteButton.clicked.connect(self.addNote)
         self.notesView.itemClicked.connect(self.displayNote)
         
-        # Assignment Tab buttons
+        # Assignment Tab buttons 
         self.addAssignmentButton.clicked.connect(self.addAssignment)
-
+        self.calendar.selectionChanged.connect(self.filterAssignments)
+        
         # Load data
         self.loadNotes()
         self.loadAssignments()
         self.loadDefaultSchedule()
+        
 
     # Schedules Tab Functions
     def loadDefaultSchedule(self):
@@ -172,7 +177,7 @@ class main(QMainWindow):
             schedule_type = dialog.get_selected_schedule_type()
 
             try:
-                conn = sqlite3.connect("db/database.db")  # Updated database path
+                conn = sqlite3.connect("db/database.db")
                 cursor = conn.cursor()
                 cursor.execute("""
                     SELECT class_code, time, day, room 
@@ -260,7 +265,6 @@ class main(QMainWindow):
     # Notes Tab Functions
 
     def loadNotes(self):
-        """Load notes from the database into the QListWidget."""
         try:
             conn = sqlite3.connect("db/database.db")
             cursor = conn.cursor()
@@ -277,7 +281,6 @@ class main(QMainWindow):
             QMessageBox.warning(self, "Error", f"Failed to load notes: {e}")
 
     def addNote(self):
-        """Open the dialog to add a new note."""
         dialog = NoteInputDialog(self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             title, content = dialog.get_note()
@@ -291,7 +294,6 @@ class main(QMainWindow):
                 QMessageBox.warning(self, "Invalid Input", "Both title and content are required.")
 
     def saveNoteToDB(self, title, content):
-        """Save a new note to the database."""
         try:
             conn = sqlite3.connect("db/database.db")
             cursor = conn.cursor()
@@ -307,7 +309,6 @@ class main(QMainWindow):
             return False
 
     def displayNote(self, item):
-        """Display the selected note's content in an editable dialog."""
         note_id = item.data(1)  # Retrieve the note ID from the item's data
         try:
             conn = sqlite3.connect("db/database.db")
@@ -315,7 +316,6 @@ class main(QMainWindow):
             cursor.execute("SELECT title, content FROM notes WHERE id = ?", (note_id,))
             note = cursor.fetchone()
             conn.close()
-
             if note:
                 title, content = note
                 dialog = EditNoteDialog(note_id, title, content, self)
@@ -361,33 +361,66 @@ class main(QMainWindow):
 
     # Assignments Tab Functions
     def loadAssignments(self):
-        """Load assignments from the database into the QTableWidget."""
         try:
             conn = sqlite3.connect("db/database.db")
             cursor = conn.cursor()
-            cursor.execute("SELECT id, title, details, due, class_code FROM assignments WHERE username = ?", (self.username,))
+            cursor.execute("SELECT id, title, due, class_code FROM assignments WHERE username = ?", (self.username,))
             assignments = cursor.fetchall()
             conn.close()
 
             # Clear the table widget before populating
             self.assignmentList.setRowCount(0)
-            self.assignmentList.setColumnCount(4)
-            self.assignmentList.setHorizontalHeaderLabels(["Title", "Details", "Due Date", "Class Code"])
+            self.assignmentList.setColumnCount(3)
+            self.assignmentList.setHorizontalHeaderLabels(["Title", "Due Date", "Class Code"])
 
-            for row_idx, (assignment_id, title, details, due, class_code) in enumerate(assignments):
+            for row_idx, (assignment_id, title, due, class_code) in enumerate(assignments):
                 self.assignmentList.insertRow(row_idx)
                 self.assignmentList.setItem(row_idx, 0, QTableWidgetItem(title))
-                self.assignmentList.setItem(row_idx, 1, QTableWidgetItem(details))
-                self.assignmentList.setItem(row_idx, 2, QTableWidgetItem(due))
-                self.assignmentList.setItem(row_idx, 3, QTableWidgetItem(class_code))
+                self.assignmentList.setItem(row_idx, 1, QTableWidgetItem(due))
+                self.assignmentList.setItem(row_idx, 2, QTableWidgetItem(class_code))
         except sqlite3.Error as e:
             QMessageBox.warning(self, "Error", f"Failed to load assignments: {e}")
 
     def addAssignment(self):
-        pass
+        dialog = AddAssignmentDialog(self)
+        result = dialog.exec()
+        conn = sqlite3.connect("db/database.db")
+        cursor = conn.cursor()
+        if result == QDialog.DialogCode.Accepted:
+            assignment_data = dialog.assignment_input()
+            cursor.execute("""
+                INSERT INTO assignments (username, class_code, title, details, due)
+                VALUES (?, ?, ?, ?, ?)
+            """, (self.username, *assignment_data))
+            conn.commit()
+            conn.close()
+            self.loadAssignments()
 
     def removeAssignment(self):
         pass
+    
+    def filterAssignments(self):
+        selected_date = self.calendar.selectedDate().toString("MM-dd-yyyy")
+        try:
+            conn = sqlite3.connect("db/database.db")
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT title, due, class_code 
+                FROM assignments 
+                WHERE username = ? AND due = ?
+            """, (self.username, selected_date))
+            assignments = cursor.fetchall()
+            conn.close()
+
+            # Clear the table widget before populating
+            self.assignmentList.setRowCount(0)
+            for row_idx, (title, due, class_code) in enumerate(assignments):
+                self.assignmentList.insertRow(row_idx)
+                self.assignmentList.setItem(row_idx, 0, QTableWidgetItem(title))
+                self.assignmentList.setItem(row_idx, 1, QTableWidgetItem(due))
+                self.assignmentList.setItem(row_idx, 2, QTableWidgetItem(class_code))
+        except sqlite3.Error as e:
+            QMessageBox.warning(self, "Error", f"Failed to filter assignments: {e}")
 
     # Budgets Tab Functions
     # Placeholder for future implementation
@@ -398,7 +431,7 @@ class main(QMainWindow):
     # Add functions related to Settings here
 
 app = QApplication(sys.argv)
-login = LoginPage("db/user_accounts.db")  # Ensure the correct database path is passed
+login = LoginPage("db/database.db")
 if login.exec() == QDialog.DialogCode.Accepted:
     window = main(login.logged_in_username)
     window.show()

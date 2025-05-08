@@ -247,6 +247,8 @@ QWidget#tab1, QWidget#tab2, QWidget#tab3 {
     background-color: #1e1e38;
     color: white;
     border: 1px solid #444;
+	font-weight:bold;
+	font-size:20px;
 }
 
 QListWidget::item {
@@ -336,7 +338,7 @@ QScrollBar::handle:vertical {
             <widget class="QTableWidget" name="assignmentList">
              <property name="minimumSize">
               <size>
-               <width>400</width>
+               <width>450</width>
                <height>0</height>
               </size>
              </property>
