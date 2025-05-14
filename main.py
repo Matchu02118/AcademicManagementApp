@@ -1,11 +1,11 @@
 import sys
+import warnings
 import sqlite3
 from PyQt6.QtWidgets import *
 from PyQt6 import uic
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 from dialogBoxes import *
-import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -31,12 +31,14 @@ class main(QMainWindow):
         # Assignment Tab buttons 
         self.addAssignmentButton.clicked.connect(self.addAssignment)
         self.calendar.selectionChanged.connect(self.filterAssignments)
+        self.assignmentList.itemClicked.connect(self.expandAssignment)
+        
+
         
         # Load data
         self.loadNotes()
         self.loadAssignments()
-        self.loadDefaultSchedule()
-        
+        self.loadDefaultSchedule()    
 
     # Schedules Tab Functions
     def loadDefaultSchedule(self):
@@ -53,9 +55,10 @@ class main(QMainWindow):
 
             # Clear the table widget before populating
             self.scheduleTableWidget.setColumnCount(4)
-            self.scheduleTableWidget.setHorizontalHeaderLabels(["Class Code", "Time", "Day", "Room"])
+            self.scheduleTableWidget.setHorizontalHeaderLabels(["Subject", "Time", "Day", "Room"])
 
-            self.scheduleTableWidget.setColumnWidth(1, 150) 
+            for i in range (4):
+                    self.scheduleTableWidget.setColumnWidth(i, 175) 
 
             header_font = QFont()
             header_font.setBold(True)
@@ -68,10 +71,11 @@ class main(QMainWindow):
                 self.scheduleTableWidget.insertRow(row_idx)
                 for col_idx, value in enumerate(schedule):
                     self.scheduleTableWidget.setItem(row_idx, col_idx, QTableWidgetItem(value))
+            
 
         except sqlite3.Error as e:
             QMessageBox.warning(self, "Error", f"Failed to load default schedule: {e}")
-
+            
     def addSchedule(self):
         dialog = ScheduleInputDialog(self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
@@ -81,7 +85,7 @@ class main(QMainWindow):
                 self.loadScheduleByType(schedule_data[-1])
             else:
                 QMessageBox.warning(self, "Error", "Failed to add schedule. Please try again.")
-
+            
     def loadScheduleByType(self, schedule_type):
         try:
             conn = sqlite3.connect("db/database.db")
@@ -96,9 +100,10 @@ class main(QMainWindow):
 
             # Clear the table widget before populating
             self.scheduleTableWidget.setColumnCount(4)
-            self.scheduleTableWidget.setHorizontalHeaderLabels(["Class Code", "Time", "Day", "Room"])
+            self.scheduleTableWidget.setHorizontalHeaderLabels(["Subject", "Time", "Day", "Room"])
 
-            self.scheduleTableWidget.setColumnWidth(1, 150)
+            for i in range (4):
+                    self.scheduleTableWidget.setColumnWidth(i, 175)
 
             header_font = QFont()
             header_font.setBold(True)
@@ -192,8 +197,9 @@ class main(QMainWindow):
                 self.scheduleTableWidget.setHorizontalHeaderLabels(["Class Code", "Time", "Day", "Room"])
 
                 # Adjust column widths
-                self.scheduleTableWidget.setColumnWidth(1, 150)
-
+                for i in range (4):
+                    self.scheduleTableWidget.setColumnWidth(i, 175)
+                
                 header_font = QFont()
                 header_font.setBold(True)
                 for i in range(4):
@@ -263,7 +269,6 @@ class main(QMainWindow):
                 QMessageBox.warning(self, "Error", f"Failed to update schedule: {e}")
 
     # Notes Tab Functions
-
     def loadNotes(self):
         try:
             conn = sqlite3.connect("db/database.db")
@@ -364,7 +369,7 @@ class main(QMainWindow):
         try:
             conn = sqlite3.connect("db/database.db")
             cursor = conn.cursor()
-            cursor.execute("SELECT id, title, due, class_code FROM assignments WHERE username = ?", (self.username,))
+            cursor.execute("SELECT title, due, class_code FROM assignments WHERE username = ?", (self.username,))
             assignments = cursor.fetchall()
             conn.close()
 
@@ -373,7 +378,7 @@ class main(QMainWindow):
             self.assignmentList.setColumnCount(3)
             self.assignmentList.setHorizontalHeaderLabels(["Title", "Due Date", "Class Code"])
 
-            for row_idx, (assignment_id, title, due, class_code) in enumerate(assignments):
+            for row_idx, (title, due, class_code) in enumerate(assignments):
                 self.assignmentList.insertRow(row_idx)
                 self.assignmentList.setItem(row_idx, 0, QTableWidgetItem(title))
                 self.assignmentList.setItem(row_idx, 1, QTableWidgetItem(due))
@@ -395,9 +400,6 @@ class main(QMainWindow):
             conn.commit()
             conn.close()
             self.loadAssignments()
-
-    def removeAssignment(self):
-        pass
     
     def filterAssignments(self):
         selected_date = self.calendar.selectedDate().toString("MM-dd-yyyy")
@@ -422,13 +424,31 @@ class main(QMainWindow):
         except sqlite3.Error as e:
             QMessageBox.warning(self, "Error", f"Failed to filter assignments: {e}")
 
+    def expandAssignment(self):
+        selected_row = self.assignmentList.currentRow()
+        conn = sqlite3.connect("db/database.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT username, class_code, title, details 
+            FROM assignments 
+            WHERE username = ? AND title = ?
+        """, (self.username, self.assignmentList.item(selected_row, 0).text()))
+        assignment = cursor.fetchone()
+        conn.close()
+        if assignment:
+            self.username, class_code, title, details = assignment
+            dialog = SelectedAssignmentDialog(title, details, self.username, class_code, self)
+            dialog.exec()
+            self.loadAssignments()
+        else:
+            QMessageBox.warning(self, "Error", "Failed to retrieve assignment details.")
+        
     # Budgets Tab Functions
-    # Placeholder for future implementation
-    # Add functions related to Budgets here
-
-    # Settings Tab Functions
-    # Placeholder for future implementation
-    # Add functions related to Settings here
+    def load_budgets(self):
+        pass
+    
+    def add_budget(self):
+        pass
 
 app = QApplication(sys.argv)
 login = LoginPage("db/database.db")

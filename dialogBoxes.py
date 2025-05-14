@@ -4,6 +4,7 @@ from PyQt6 import uic
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 import sqlite3
+import sys
 
 class LoginPage(QDialog):
     def __init__(self, user_db_path):
@@ -93,7 +94,7 @@ class ScheduleInputDialog(QDialog):
         self.scheduleTypeGroup.addButton(self.examRadioButton)
 
         # Labels for inputs
-        self.classCodeLabel = QLabel("Class Code:")
+        self.classCodeLabel = QLabel("Subject:")
         self.timeLabel = QLabel("Time:")
         self.dayLabel = QLabel("Day:")
         self.roomLabel = QLabel("Room:")
@@ -215,7 +216,7 @@ class UpdateScheduleDialog(QDialog):
 
         # Layout for the dialog
         layout = QVBoxLayout()
-        self.classCodeLabel = QLabel("Class Code:")
+        self.classCodeLabel = QLabel("Subject:")
         self.timeLabel = QLabel("Time:")
         self.dayLabel = QLabel("Day:")
         self.roomLabel = QLabel("Room:")
@@ -267,6 +268,8 @@ class NoteInputDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Enter a Note:")
         self.resize(800, 640)
+        self.setMaximumSize(800, 640)
+        self.setMinimumSize(800, 640)
 
         with open("styles/noteDialogs/noteInput.qss", "r") as file:
             qss= file.read()
@@ -314,7 +317,7 @@ class NoteInputDialog(QDialog):
         """Convert the content of the QTextEdit to plain text."""
         current_text = self.noteInput.toPlainText()
         cursor = self.noteInput.textCursor()
-        cursor_position = cursor.position()  # Save the current cursor position
+        cursor_position = cursor.position()
 
         # Only update the text if it has changed
         if self.noteInput.toPlainText() != current_text:
@@ -327,7 +330,6 @@ class NoteInputDialog(QDialog):
         self.noteInput.setTextCursor(cursor)
         
     def get_note(self):
-        """Return the note title and content."""
         return self.noteTitle.text(), self.noteInput.toPlainText()
 
 class EditNoteDialog(QDialog):
@@ -425,3 +427,47 @@ class AddAssignmentDialog(QDialog):
         for subject in subjects:
             self.classCodes.addItem(subject[0])
         conn.close()
+        
+class SelectedAssignmentDialog(QDialog):
+    def __init__(self, title, details, logged_in_username, class_code, parent=None):
+        super().__init__(parent)
+        uic.loadUi("ui/assignment_details.ui", self)
+        self.assignmentTitle = title
+        self.assignmentDetails = details
+        self.username = logged_in_username
+        self.subject = class_code
+        
+        self.title.setText(self.assignmentTitle)
+        self.details.setText(self.assignmentDetails)
+        self.setWindowTitle(self.assignmentTitle)
+        
+        # Buttons
+        self.doneBtn.clicked.connect(self.marked_done)
+        self.deleteBtn.clicked.connect(self.delete_assignment)
+        
+    def marked_done(self):
+        conn = sqlite3.connect("db/database.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO markedDone (username, class_code, assignment_title) VALUES (?, ?, ?)",
+                        (self.username, self.subject, self.assignmentTitle))
+        cursor.execute("DELETE FROM assignments WHERE class_code = ? AND title = ?",
+                        (self.subject, self.assignmentTitle))
+        conn.commit()
+        conn.close()
+        self.accept()
+    
+    def delete_assignment(self):
+        conn = sqlite3.connect("db/database.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM assignments WHERE class_code = ? AND title = ?",
+                        (self.subject, self.assignmentTitle))
+        conn.commit()
+        conn.close()
+        self.accept()
+        
+        
+"""# Test area
+app = QApplication(sys.argv)
+test = ScheduleInputDialog() # Renmae this to the appropriate dialog you want to test
+test.show()
+sys.exit(app.exec())"""

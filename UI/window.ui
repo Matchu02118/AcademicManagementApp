@@ -206,7 +206,25 @@ QWidget#tab1, QWidget#tab2, QWidget#tab3 {
         <item row="1" column="0" colspan="2">
          <widget class="QTableWidget" name="scheduleTableWidget">
           <property name="styleSheet">
-           <string notr="true"/>
+           <string notr="true">QTableWidget{
+	background-color:#1e1e38;
+	color:#fff;
+	border:none;
+}
+
+QHeaderView, QTableCornerButton::section, QHeaderView::section{
+	background-color:rgb(42, 42, 70);
+}
+
+QHeaderView, QHeaderView::section{
+	color:#fff;
+}
+
+QHeaderView{
+	text-align:center;
+	font-size:14px;
+}
+</string>
           </property>
          </widget>
         </item>
@@ -344,8 +362,22 @@ QScrollBar::handle:vertical {
              </property>
              <property name="styleSheet">
               <string notr="true">QTableWidget{
-	background-color:#333;
+	background-color:#1e1e38;
 	color: white;
+	border: none;
+}
+
+QHeaderView, QTableCornerButton::section, QHeaderView::section{
+	background-color:rgb(42, 42, 70);
+}
+
+QHeaderView, QHeaderView::section{
+	color:#fff;
+}
+
+QHeaderView{
+	text-align:center;
+	font-size:14px;
 }</string>
              </property>
             </widget>
@@ -358,6 +390,12 @@ QScrollBar::handle:vertical {
         </item>
         <item alignment="Qt::AlignTop">
          <widget class="QWidget" name="cal_buttonWidget" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>280</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
             <width>360</width>
@@ -369,12 +407,43 @@ QScrollBar::handle:vertical {
           </property>
           <layout class="QVBoxLayout" name="verticalLayout">
            <item>
+            <widget class="QLabel" name="calendarLabel">
+             <property name="font">
+              <font>
+               <family>Tahoma</family>
+               <pointsize>11</pointsize>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QLabel{
+	color:#fff;
+}</string>
+             </property>
+             <property name="text">
+              <string>Select Due Date</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QCalendarWidget" name="calendar">
              <property name="maximumSize">
               <size>
-               <width>480</width>
+               <width>320</width>
                <height>320</height>
               </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="gridVisible">
+              <bool>true</bool>
+             </property>
+             <property name="navigationBarVisible">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -412,66 +481,110 @@ QScrollBar::handle:vertical {
         <string>Budgets</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_4">
-        <item alignment="Qt::AlignHCenter|Qt::AlignTop">
-         <widget class="QLabel" name="budgetLabel">
-          <property name="font">
-           <font>
-            <pointsize>16</pointsize>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QLabel{
-	color:#fff;
-}
-</string>
-          </property>
-          <property name="text">
-           <string>Budgets</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="SettingsTab">
-       <attribute name="title">
-        <string>Settings</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QLabel" name="settingsLabel">
+         <widget class="QWidget" name="budgetContainer" native="true">
           <property name="minimumSize">
            <size>
-            <width>640</width>
-            <height>480</height>
+            <width>430</width>
+            <height>0</height>
            </size>
           </property>
-          <property name="maximumSize">
-           <size>
-            <width>800</width>
-            <height>600</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>16</pointsize>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="autoFillBackground">
-           <bool>false</bool>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QLabel{
+          <widget class="QTableWidget" name="budgetList">
+           <property name="geometry">
+            <rect>
+             <x>5</x>
+             <y>1</y>
+             <width>411</width>
+             <height>501</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QTableWidget{
+	background-color:#1e1e38;
+	color: white;
+	border:none;
+}
+
+QHeaderView, QTableCornerButton::section, QHeaderView::section{
+	background-color:rgb(42, 42, 70);
+}
+
+QHeaderView, QHeaderView::section{
 	color:#fff;
+}
+
+QHeaderView{
+	text-align:center;
+	font-size:14px;
 }</string>
-          </property>
-          <property name="text">
-           <string>Settings</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignHCenter|Qt::AlignTop</set>
-          </property>
+           </property>
+          </widget>
+          <widget class="QWidget" name="budgetFncts" native="true">
+           <property name="geometry">
+            <rect>
+             <x>430</x>
+             <y>10</y>
+             <width>301</width>
+             <height>500</height>
+            </rect>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>530</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <widget class="QComboBox" name="subjectInput">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>40</y>
+              <width>281</width>
+              <height>31</height>
+             </rect>
+            </property>
+           </widget>
+           <widget class="QLabel" name="expenseLabel">
+            <property name="geometry">
+             <rect>
+              <x>90</x>
+              <y>230</y>
+              <width>121</width>
+              <height>41</height>
+             </rect>
+            </property>
+            <property name="font">
+             <font>
+              <family>Tahoma</family>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Total Expense:</string>
+            </property>
+           </widget>
+           <widget class="QLabel" name="totalExpense">
+            <property name="geometry">
+             <rect>
+              <x>110</x>
+              <y>260</y>
+              <width>81</width>
+              <height>41</height>
+             </rect>
+            </property>
+            <property name="font">
+             <font>
+              <family>Tahoma</family>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>[Number]</string>
+            </property>
+           </widget>
+          </widget>
          </widget>
         </item>
        </layout>
