@@ -172,6 +172,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
-database/notes.db
-database/notes.db
-database/schedules.db
+
+# Files to ignore
+AcademicManagementApp.cmd
+sql/resetIncrement.sql
